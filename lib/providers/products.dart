@@ -8,6 +8,10 @@ import './product.dart';
 
 class Products with ChangeNotifier {
   List<Product> _items = [];
+  final String token;
+  final String userId;
+
+  Products(this.token, this._items, this.userId);
 
   List<Product> get items {
     return [..._items];
@@ -21,15 +25,22 @@ class Products with ChangeNotifier {
     return _items.firstWhere((prod) => prod.id == id);
   }
 
-  Future<void> fetchAndSetProducts() async {
-    final url = 'https://flutter-learn-e5189.firebaseio.com/products.json';
+  Future<void> fetchAndSetProducts([bool isFilter = false]) async {
+    final filter = isFilter ? 'orderBy="creatorId"&equalTo="$userId"' : '';
+    var url =
+        'https://flutter-learn-e5189.firebaseio.com/products.json?auth=$token&$filter';
     try {
-      final response = await http.get(url);
+      final response =
+          await http.get(url, headers: {'Authorization': 'Bearer $token'});
       final extractedProducts =
           json.decode(response.body) as Map<String, dynamic>;
       if (response == null) {
         return;
       }
+      url =
+          'https://flutter-learn-e5189.firebaseio.com/userFavorites/$userId.json?auth=$token';
+      final favoriteResponse = await http.get(url);
+      final convertedFavoriteResponse = json.decode(favoriteResponse.body);
       List<Product> _tempProduct = [];
       extractedProducts.forEach((prodId, prodData) {
         _tempProduct.add(Product(
@@ -38,7 +49,9 @@ class Products with ChangeNotifier {
           price: prodData['price'],
           imageUrl: prodData['imageUrl'],
           description: prodData['description'],
-          isFavorite: prodData['isFavorite'],
+          isFavorite: convertedFavoriteResponse == null
+              ? false
+              : convertedFavoriteResponse[prodId] ?? false,
         ));
       });
       _items = _tempProduct;
@@ -49,13 +62,14 @@ class Products with ChangeNotifier {
   }
 
   Future<void> addProduct(Product product) async {
-    final url = 'https://flutter-learn-e5189.firebaseio.com/products.json';
+    final url =
+        'https://flutter-learn-e5189.firebaseio.com/products.json?auth=$token';
     var body = {
       'title': product.title,
       'price': product.price,
       'description': product.description,
       'imageUrl': product.imageUrl,
-      'isFavorite': product.isFavorite
+      'creatorId': userId
     };
     try {
       final response = await http.post(url, body: json.encode(body));
@@ -75,7 +89,7 @@ class Products with ChangeNotifier {
 
   Future<void> update(String productid, Product editedProduct) async {
     final url =
-        'https://flutter-learn-e5189.firebaseio.com/products/$productid.json';
+        'https://flutter-learn-e5189.firebaseio.com/products/$productid.json?auth=$token';
     final index = _items.indexWhere((item) => item.id == productid);
     if (index >= 0) {
       await http.patch(url,
@@ -93,7 +107,8 @@ class Products with ChangeNotifier {
   }
 
   Future<void> delete(String id) async {
-    final url = 'https://flutter-learn-e5189.firebaseio.com/products/$id.json';
+    final url =
+        'https://flutter-learn-e5189.firebaseio.com/products/$id.json?auth=$token';
     final existingProductIndex =
         _items.indexWhere((element) => element.id == id);
     var deletedProduct = _items[existingProductIndex];

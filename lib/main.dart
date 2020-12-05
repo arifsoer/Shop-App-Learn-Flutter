@@ -7,10 +7,12 @@ import './screens/cart_screen.dart';
 import './screens/order_screen.dart';
 import './screens/user_product_screen.dart';
 import './screens/edit_product_screen.dart';
+import './screens/auth_screen.dart';
 
 import './providers/products.dart';
 import './providers/cart.dart';
 import './providers/order.dart';
+import './providers/auth.dart';
 
 void main() {
   runApp(MyApp());
@@ -23,32 +25,48 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(
-          create: (ctx) => Products(),
+          create: (ctx) => Auth(),
+        ),
+        ChangeNotifierProxyProvider<Auth, Products>(
+          update: (ctx, authData, prevProducts) => Products(
+            authData.token,
+            prevProducts == null ? [] : prevProducts.items,
+            authData.userId,
+          ),
+          create: (ctx) => Products(null, [], null),
         ),
         ChangeNotifierProvider(
           create: (ctx) => Cart(),
         ),
-        ChangeNotifierProvider(
-          create: (ctx) => Orders(),
+        ChangeNotifierProxyProvider<Auth, Orders>(
+          create: (ctx) => Orders(null, null, []),
+          update: (ctx, auth, previousOrders) => Orders(
+            auth.token,
+            auth.userId,
+            previousOrders.items,
+          ),
         ),
       ],
-      child: MaterialApp(
-        title: 'The Shop App',
-        theme: ThemeData(
-          primarySwatch: Colors.purple,
-          accentColor: Colors.deepOrange,
-          fontFamily: 'Lato',
-          visualDensity: VisualDensity.adaptivePlatformDensity,
+      child: Consumer<Auth>(
+        builder: (ctx, authData, _) => MaterialApp(
+          title: 'The Shop App',
+          theme: ThemeData(
+            primarySwatch: Colors.purple,
+            accentColor: Colors.deepOrange,
+            fontFamily: 'Lato',
+            visualDensity: VisualDensity.adaptivePlatformDensity,
+          ),
+          debugShowCheckedModeBanner: false,
+          home: authData.isAuth ? ProductOverviewScreen() : AuthScreen(),
+          routes: {
+            ProductOverviewScreen.routeName: (ctx) => ProductOverviewScreen(),
+            ProductDetailScreen.routeName: (ctx) => ProductDetailScreen(),
+            CartScreen.routeName: (ctx) => CartScreen(),
+            OrderScreen.routeName: (ctx) => OrderScreen(),
+            UserProducrScreen.routeName: (ctx) => UserProducrScreen(),
+            EditProductScreen.routeName: (ctx) => EditProductScreen(),
+          },
         ),
-        debugShowCheckedModeBanner: false,
-        home: ProductOverviewScreen(),
-        routes: {
-          ProductDetailScreen.routeName: (ctx) => ProductDetailScreen(),
-          CartScreen.routeName: (ctx) => CartScreen(),
-          OrderScreen.routeName: (ctx) => OrderScreen(),
-          UserProducrScreen.routeName: (ctx) => UserProducrScreen(),
-          EditProductScreen.routeName: (ctx) => EditProductScreen(),
-        },
       ),
     );
   }
