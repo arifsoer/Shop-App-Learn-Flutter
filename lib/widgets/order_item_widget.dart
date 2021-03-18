@@ -18,30 +18,37 @@ class _OrderItemWidgetState extends State<OrderItemWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: EdgeInsets.all(15),
-      child: Column(
-        children: <Widget>[
-          ListTile(
-            title: Text('\$${widget.orderItem.amount.toStringAsFixed(2)}'),
-            subtitle: Text(DateFormat('dd/MM/yyyy hh:mm')
-                .format(widget.orderItem.dateTime)),
-            trailing: IconButton(
-              icon: Icon(_expanded ? Icons.expand_less : Icons.expand_more),
-              onPressed: () {
-                setState(() {
-                  _expanded = !_expanded;
-                });
-              },
+    return AnimatedContainer(
+      duration: Duration(milliseconds: 200),
+      height: _expanded
+          ? min(widget.orderItem.products.length * 20.0 + 130, 300)
+          : 120,
+      child: Card(
+        margin: EdgeInsets.all(15),
+        child: Column(
+          children: <Widget>[
+            ListTile(
+              title: Text('\$${widget.orderItem.amount.toStringAsFixed(2)}'),
+              subtitle: Text(DateFormat('dd/MM/yyyy hh:mm')
+                  .format(widget.orderItem.dateTime)),
+              trailing: IconButton(
+                icon: Icon(_expanded ? Icons.expand_less : Icons.expand_more),
+                onPressed: () {
+                  setState(() {
+                    _expanded = !_expanded;
+                  });
+                },
+              ),
             ),
-          ),
-          if (_expanded)
-            Container(
+            AnimatedContainer(
+              duration: Duration(milliseconds: 200),
               padding: EdgeInsets.symmetric(
                 horizontal: 15,
                 vertical: 4,
               ),
-              height: min(widget.orderItem.products.length * 25.0 + 10, 100),
+              height: _expanded
+                  ? min(widget.orderItem.products.length * 20.0 + 10, 100)
+                  : 0,
               child: ListView(
                 children: widget.orderItem.products
                     .map(
@@ -68,7 +75,8 @@ class _OrderItemWidgetState extends State<OrderItemWidget> {
                     .toList(),
               ),
             )
-        ],
+          ],
+        ),
       ),
     );
   }

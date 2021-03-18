@@ -14,6 +14,8 @@ import './providers/cart.dart';
 import './providers/order.dart';
 import './providers/auth.dart';
 
+import './helpers/custom_route.dart';
+
 void main() {
   runApp(MyApp());
 }
@@ -51,11 +53,14 @@ class MyApp extends StatelessWidget {
         builder: (ctx, authData, _) => MaterialApp(
           title: 'The Shop App',
           theme: ThemeData(
-            primarySwatch: Colors.purple,
-            accentColor: Colors.deepOrange,
-            fontFamily: 'Lato',
-            visualDensity: VisualDensity.adaptivePlatformDensity,
-          ),
+              primarySwatch: Colors.purple,
+              accentColor: Colors.deepOrange,
+              fontFamily: 'Lato',
+              visualDensity: VisualDensity.adaptivePlatformDensity,
+              pageTransitionsTheme: PageTransitionsTheme(builders: {
+                TargetPlatform.android: CustomPageTransistionBuilder(),
+                TargetPlatform.iOS: CustomPageTransistionBuilder(),
+              })),
           debugShowCheckedModeBanner: false,
           home: authData.isAuth ? ProductOverviewScreen() : AuthScreen(),
           routes: {
